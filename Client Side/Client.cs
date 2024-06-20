@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 class Client
@@ -28,7 +27,7 @@ class Client
                 byte[] loginData = Encoding.ASCII.GetBytes(loginMessage);
                 stream.Write(loginData, 0, loginData.Length);
 
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[4096];
                 int byteCount = stream.Read(buffer, 0, buffer.Length);
                 response = Encoding.ASCII.GetString(buffer, 0, byteCount);
                 Console.WriteLine("Received from server: " + response);
@@ -76,16 +75,16 @@ class Client
                         break;
 
                     case "Chef":
-                        Console.WriteLine("Select action: \n1) Roll Out Me \n2) View Feedback \n3) View Monthly Report \n4) View Menu Items");
+                        Console.WriteLine("Select action: \n1) View Recommended Itemm \n2) View Feedback \n3) View Monthly Report \n4) View Menu Items \n5) Roll Out Items For the Next Day ");
                         string chefAction = Console.ReadLine();
                         switch (chefAction)
                         {
                             case "1":
                                 Console.WriteLine("Enter meal type (Breakfast, Lunch, Dinner):");
                                 string mealType = Console.ReadLine();
-                                Console.WriteLine("Enter items to recommend (comma-separated):");
-                                string items = Console.ReadLine();
-                                message += "recommenditem:" + mealType + ";" + items;
+                                Console.WriteLine("Enter number of items to recommend:");
+                                string size = Console.ReadLine();
+                                message += $"recommenditem:{mealType};{size}";
                                 break;
                             case "2":
                                 message += "viewfeedback:";
@@ -95,6 +94,11 @@ class Client
                                 break;
                             case "4":
                                 message += "viewmenuitem:";
+                                break;
+                            case "5":
+                                Console.WriteLine("Enter Items Id For Recommend Items to Employee:");
+                                String itemID = Console.ReadLine();
+                                message += $"rolloutmenu:{itemID}";
                                 break;
                             default:
                                 Console.WriteLine("Please enter a valid option.");
@@ -129,7 +133,7 @@ class Client
                 byte[] data = Encoding.ASCII.GetBytes(message);
                 stream.Write(data, 0, data.Length);
 
-                byte[] responseBuffer = new byte[1024];
+                byte[] responseBuffer = new byte[4096];
                 int responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
                 response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
                 Console.WriteLine("Received from server: " + response);
