@@ -8,140 +8,182 @@ class Client
     public static NetworkStream stream;
     public static void Main()
     {
-        try
+        while (true)
         {
-            client = new TcpClient("127.0.0.1", 5001);
-            stream = client.GetStream();
-            Console.WriteLine("Connected to server.");
-
-            string email;
-            string response;
-            int userId = 0;
-
-            while (true)
+            try
             {
-                Console.WriteLine("Enter your email:");
-                email = Console.ReadLine();
+                client = new TcpClient("127.0.0.1", 5001);
+                stream = client.GetStream();
+                Console.WriteLine("Connected to server.");
 
-                string loginMessage = email + ":";
-                byte[] loginData = Encoding.ASCII.GetBytes(loginMessage);
-                stream.Write(loginData, 0, loginData.Length);
+                string email;
+                string response;
+                int userId = 0;
 
-                byte[] buffer = new byte[4096];
-                int byteCount = stream.Read(buffer, 0, buffer.Length);
-                response = Encoding.ASCII.GetString(buffer, 0, byteCount);
-                Console.WriteLine("Received from server: " + response);
-
-                if (response.Contains("Login successful"))
+                while (true)
                 {
-                    string[] responseParts = response.Split(' ');
-                    userId = int.Parse(responseParts[6].TrimEnd('.'));
-                    break;
+                    Console.WriteLine("Enter your email:");
+                    email = Console.ReadLine();
+
+                    string loginMessage = email + ":";
+                    byte[] loginData = Encoding.ASCII.GetBytes(loginMessage);
+                    stream.Write(loginData, 0, loginData.Length);
+
+                    byte[] buffer = new byte[4096];
+                    int byteCount = stream.Read(buffer, 0, buffer.Length);
+                    response = Encoding.ASCII.GetString(buffer, 0, byteCount);
+                    Console.WriteLine("Received from server: " + response);
+
+                    if (response.Contains("Login successful"))
+                    {
+                        string[] responseParts = response.Split(' ');
+                        userId = int.Parse(responseParts[6].TrimEnd('.'));
+                        if (response.Contains("Notifications:"))
+                        {
+
+                            string[] notificationParts = response.Split(new string[] { "Notifications:" }, StringSplitOptions.None);
+                            if (notificationParts.Length > 1)
+                            {
+                                string notificationsText = notificationParts[1].Trim();
+                                Console.WriteLine(notificationsText);
+                            }
+                        }
+
+                        byteCount = stream.Read(buffer, 0, buffer.Length);
+                        string notifications = Encoding.ASCII.GetString(buffer, 0, byteCount);
+                        
+                        break;
+                    }
+                    
+                    else
+                    {
+                        Console.WriteLine("Login failed. Please check your email and try again.");
+                    }
                 }
-                else
+
+                string role = response.Split(' ')[3].Trim('.');
+
+                while (true)
                 {
-                    Console.WriteLine("Login failed. Please check your email and try again.");
+                    string message = email + ":";
+                    switch (role)
+                    {
+                        case "Admin":
+                            Console.WriteLine("Select action: \n1) View Menu Item \n2) Add Menu Item \n3) Update Menu Item \n4) Delete Menu Item \n5) Logout");
+                            string adminAction = Console.ReadLine();
+                            switch (adminAction)
+                            {
+                                case "1":
+                                    message += "viewitems:";
+                                    break;
+                                case "2":
+                                    message += AddMenuItem();
+                                    break;
+                                case "3":
+                                    message += UpdateMenuItem();
+                                    break;
+                                case "4":
+                                    message += DeleteMenuItem();
+                                    break;
+                                case "5":
+                                    message += "logout:";
+                                    break;
+                                default:
+                                    Console.WriteLine("Please enter a valid option.");
+                                    continue;
+                            }
+                            break;
+
+                        case "Chef":
+                            Console.WriteLine("Select action: \n1) View Recommended Item \n2) View Feedback \n3) View Employees Votes for Items \n4) View Menu Items \n5) Roll Out Items For the Next Day \n6) Logout ");
+                            string chefAction = Console.ReadLine();
+                            switch (chefAction)
+                            {
+                                case "1":
+                                    Console.WriteLine("Enter meal type (Breakfast, Lunch, Dinner):");
+                                    string mealType = Console.ReadLine();
+                                    Console.WriteLine("Enter number of items to recommend:");
+                                    string size = Console.ReadLine();
+                                    message += $"recommenditem:{mealType};{size}";
+                                    break;
+                                case "2":
+                                    message += "viewfeedback:";
+                                    break;
+                                case "3":
+                                    message += "viewemployeevote:";
+
+                                    break;
+                                case "4":
+                                    message += "viewmenuitem:";
+                                    break;
+                                case "5":
+                                    Console.WriteLine("Enter Items Id For Recommend Items to Employee:");
+                                    String itemID = Console.ReadLine();
+                                    message += $"rolloutmenu:{itemID}";
+                                    break;
+                                case "6":
+                                    message += "logout:";
+                                    break;
+                                default:
+                                    Console.WriteLine("Please enter a valid option.");
+                                    continue;
+                            }
+                            break;
+
+                        case "Employee":
+                            Console.WriteLine("Select action:\n1) View Menu \n2) Give Feedback \n3) Give Vote \n4) Logout");
+                            string employeeAction = Console.ReadLine();
+                            switch (employeeAction)
+                            {
+                                case "1":
+                                    Console.WriteLine("Enter meal type (Breakfast, Lunch, Dinner):");
+                                    string viewMealType = Console.ReadLine();
+                                    message += "viewmenu:" + viewMealType;
+                                    break;
+                                case "2":
+                                    message += GiveFeedback(userId);
+                                    break;
+                                case "3":
+                                    Console.WriteLine("Enter the item id for which you want to vote an item");
+                                    string itemId = Console.ReadLine();
+                                    message += "voteitem:" + itemId;
+                                    break;
+                                case "4":
+                                    message += "logout:";
+                                    break;
+                                default:
+                                    Console.WriteLine("Please enter a valid option.");
+                                    continue;
+                            }
+                            break;
+
+                        default:
+                            Console.WriteLine("Unknown role");
+                            continue;
+                    }
+
+                    byte[] data = Encoding.ASCII.GetBytes(message);
+                    stream.Write(data, 0, data.Length);
+
+                    byte[] responseBuffer = new byte[4096];
+                    int responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
+                    response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
+                    Console.WriteLine("Received from server: " + response);
+                    if (response.Contains("Logout successful"))
+                    {
+                        Console.WriteLine("You have been logged out.");
+                        break;
+                    }
+
                 }
+                stream.Close();
+                client.Close();
             }
 
-            string role = response.Split(' ')[3].Trim('.');
-
-            while (true)
+            catch (Exception e)
             {
-                string message = email + ":";
-                switch (role)
-                {
-                    case "Admin":
-                        Console.WriteLine("Select action: \n1) View Menu Item \n2) Add Menu Item \n3) Update Menu Item \n4) Delete Menu Item");
-                        string adminAction = Console.ReadLine();
-                        switch (adminAction)
-                        {
-                            case "1":
-                                message += "viewitems:";
-                                break;
-                            case "2":
-                                message += AddMenuItem();
-                                break;
-                            case "3":
-                                message += UpdateMenuItem();
-                                break;
-                            case "4":
-                                message += DeleteMenuItem();
-                                break;
-                            default:
-                                Console.WriteLine("Please enter a valid option.");
-                                continue;
-                        }
-                        break;
-
-                    case "Chef":
-                        Console.WriteLine("Select action: \n1) View Recommended Itemm \n2) View Feedback \n3) View Monthly Report \n4) View Menu Items \n5) Roll Out Items For the Next Day ");
-                        string chefAction = Console.ReadLine();
-                        switch (chefAction)
-                        {
-                            case "1":
-                                Console.WriteLine("Enter meal type (Breakfast, Lunch, Dinner):");
-                                string mealType = Console.ReadLine();
-                                Console.WriteLine("Enter number of items to recommend:");
-                                string size = Console.ReadLine();
-                                message += $"recommenditem:{mealType};{size}";
-                                break;
-                            case "2":
-                                message += "viewfeedback:";
-                                break;
-                            case "3":
-                                message += "generatereport:";
-                                break;
-                            case "4":
-                                message += "viewmenuitem:";
-                                break;
-                            case "5":
-                                Console.WriteLine("Enter Items Id For Recommend Items to Employee:");
-                                String itemID = Console.ReadLine();
-                                message += $"rolloutmenu:{itemID}";
-                                break;
-                            default:
-                                Console.WriteLine("Please enter a valid option.");
-                                continue;
-                        }
-                        break;
-
-                    case "Employee":
-                        Console.WriteLine("Select action:\n1) View Menu\n2) Give Feedback");
-                        string employeeAction = Console.ReadLine();
-                        switch (employeeAction)
-                        {
-                            case "1":
-                                Console.WriteLine("Enter meal type (Breakfast, Lunch, Dinner):");
-                                string viewMealType = Console.ReadLine();
-                                message += "viewmenu:" + viewMealType;
-                                break;
-                            case "2":
-                                message +=GiveFeedback(userId);
-                                break;
-                            default:
-                                Console.WriteLine("Please enter a valid option.");
-                                continue;
-                        }
-                        break;
-
-                    default:
-                        Console.WriteLine("Unknown role");
-                        continue;
-                }
-
-                byte[] data = Encoding.ASCII.GetBytes(message);
-                stream.Write(data, 0, data.Length);
-
-                byte[] responseBuffer = new byte[4096];
-                int responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
-                response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
-                Console.WriteLine("Received from server: " + response);
+                Console.WriteLine("Exception: " + e.Message);
             }
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine("Exception: " + e.Message);
         }
     }
     public static string AddMenuItem()
