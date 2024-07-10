@@ -1,4 +1,4 @@
-﻿using System;
+﻿/*using System;
 using System.Net.Sockets;
 using System.Text;
 
@@ -29,32 +29,40 @@ class Client
                     byte[] loginData = Encoding.ASCII.GetBytes(loginMessage);
                     stream.Write(loginData, 0, loginData.Length);
 
-                    byte[] buffer = new byte[4096];
+                    byte[] buffer = new byte[8192];
                     int byteCount = stream.Read(buffer, 0, buffer.Length);
                     response = Encoding.ASCII.GetString(buffer, 0, byteCount);
-                    Console.WriteLine("Received from server: " + response);
+                    Console.WriteLine($"{response.Split('.')[0].TrimEnd()}");
 
                     if (response.Contains("Login successful"))
                     {
-                        string[] responseParts = response.Split(' ');
-                        userId = int.Parse(responseParts[6].TrimEnd('.'));
-                        if (response.Contains("Notifications:"))
+                        int userIdIndex = response.IndexOf("UserId") + "UserId".Length;
+                        string userIdString = response.Substring(userIdIndex).Split('.')[0].Trim();
+                        if (int.TryParse(userIdString, out userId))
                         {
-
-                            string[] notificationParts = response.Split(new string[] { "Notifications:" }, StringSplitOptions.None);
-                            if (notificationParts.Length > 1)
+                            if (response.Contains("Notifications:"))
                             {
-                                string notificationsText = notificationParts[1].Trim();
-                                Console.WriteLine(notificationsText);
+                                Console.WriteLine("Notifications:");
+                                string[] notificationParts = response.Split(new string[] { "Notifications:" }, StringSplitOptions.None);
+                                if (notificationParts.Length > 1)
+                                {
+                                    string notificationsText = notificationParts[1].Trim();
+                                    Console.WriteLine(notificationsText);
+                                }
+                            }
+                            if (response.Contains("Please provide your feedback"))
+                            {
+                                Console.WriteLine($"Please provide feedback for: ");
+                                Console.WriteLine("Q1. What didn’t you like about the food item?");
+                                string q1Response = Console.ReadLine();
+                                Console.WriteLine("Q2. How would you like the food item to taste?");
+                                string q2Response = Console.ReadLine();
+                                Console.WriteLine("Q3. Share your mom’s recipe (optional):");
+                                string q3Response = Console.ReadLine();
                             }
                         }
-
-                        byteCount = stream.Read(buffer, 0, buffer.Length);
-                        string notifications = Encoding.ASCII.GetString(buffer, 0, byteCount);
-                        
                         break;
                     }
-                    
                     else
                     {
                         Console.WriteLine("Login failed. Please check your email and try again.");
@@ -69,7 +77,7 @@ class Client
                     switch (role)
                     {
                         case "Admin":
-                            Console.WriteLine("Select action: \n1) View Menu Item \n2) Add Menu Item \n3) Update Menu Item \n4) Delete Menu Item \n5) Logout");
+                            Console.WriteLine("Select action: \n1) View Menu Item \n2) Add Menu Item \n3) Update Menu Item \n4) Delete Menu Item \n5) View Discard Menu Item List \n6) Logout");
                             string adminAction = Console.ReadLine();
                             switch (adminAction)
                             {
@@ -86,6 +94,9 @@ class Client
                                     message += DeleteMenuItem();
                                     break;
                                 case "5":
+                                    message += "discardmenuitems:";
+                                    break;
+                                case "6":
                                     message += "logout:";
                                     break;
                                 default:
@@ -95,7 +106,7 @@ class Client
                             break;
 
                         case "Chef":
-                            Console.WriteLine("Select action: \n1) View Recommended Item \n2) View Feedback \n3) View Employees Votes for Items \n4) View Menu Items \n5) Roll Out Items For the Next Day \n6) Logout ");
+                            Console.WriteLine("Select action: \n1) View Recommended Item \n2) View Feedback \n3) View Employees Votes for Items \n4) View Menu Items \n5) Roll Out Items For the Next Day \n6) View Discard Menu Item List \n7) Logout ");
                             string chefAction = Console.ReadLine();
                             switch (chefAction)
                             {
@@ -111,17 +122,19 @@ class Client
                                     break;
                                 case "3":
                                     message += "viewemployeevote:";
-
                                     break;
                                 case "4":
                                     message += "viewmenuitem:";
                                     break;
                                 case "5":
                                     Console.WriteLine("Enter Items Id For Recommend Items to Employee:");
-                                    String itemID = Console.ReadLine();
+                                    string itemID = Console.ReadLine();
                                     message += $"rolloutmenu:{itemID}";
                                     break;
                                 case "6":
+                                    message += "discardmenuitems:";
+                                    break;
+                                case "7":
                                     message += "logout:";
                                     break;
                                 default:
@@ -131,7 +144,7 @@ class Client
                             break;
 
                         case "Employee":
-                            Console.WriteLine("Select action:\n1) View Menu \n2) Give Feedback \n3) Give Vote \n4) Logout");
+                            Console.WriteLine("Select action:\n1) View Menu \n2) Give Feedback \n3) Give Vote \n4) Update your Profile \n5) Logout");
                             string employeeAction = Console.ReadLine();
                             switch (employeeAction)
                             {
@@ -149,6 +162,9 @@ class Client
                                     message += "voteitem:" + itemId;
                                     break;
                                 case "4":
+                                    message += UpdateProfile(userId);
+                                    break;
+                                case "5":
                                     message += "logout:";
                                     break;
                                 default:
@@ -165,10 +181,45 @@ class Client
                     byte[] data = Encoding.ASCII.GetBytes(message);
                     stream.Write(data, 0, data.Length);
 
-                    byte[] responseBuffer = new byte[4096];
+                    byte[] responseBuffer = new byte[8192];
                     int responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
                     response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
-                    Console.WriteLine("Received from server: " + response);
+                    Console.WriteLine(response);
+
+                    if (response.Contains("Discard Menu Item List"))
+                    {
+                        while (true)
+                        {
+                            Console.WriteLine("Select one action from the following action: \n1) Remove the Food Item from Menu List \n2) Get Detailed Feedback ");
+                            string discardAction = Console.ReadLine();
+                            switch (discardAction)
+                            {
+                                case "1":
+                                    Console.WriteLine("Enter the food item name to remove:");
+                                    string removeItemName = Console.ReadLine();
+                                    message = email + ":removefooditem:" + removeItemName;
+                                    break;
+                                case "2":
+                                    Console.WriteLine("Enter the food item name to get detailed feedback:");
+                                    string feedbackItemName = Console.ReadLine();
+                                    message = email + ":insertfeedbacknotification:" + feedbackItemName;
+                                    break;
+                                default:
+                                    Console.WriteLine("Please enter a valid option.");
+                                    continue;
+                            }
+
+                            data = Encoding.ASCII.GetBytes(message);
+                            stream.Write(data, 0, data.Length);
+
+                            responseBuffer = new byte[8192];
+                            responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
+                            response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
+                            Console.WriteLine(response);
+                            break;
+                        }
+                    }
+
                     if (response.Contains("Logout successful"))
                     {
                         Console.WriteLine("You have been logged out.");
@@ -190,29 +241,44 @@ class Client
     {
         Console.WriteLine("Enter item name:");
         string itemName = Console.ReadLine();
+
         Console.WriteLine("Enter price:");
         string price = Console.ReadLine();
+
         Console.WriteLine("Enter availability status (true/false):");
         string availabilityStatus = Console.ReadLine();
+
         Console.WriteLine("Enter meal type:");
         string mealType = Console.ReadLine();
-        return $"additem:{itemName};{price};{availabilityStatus};{mealType}";
+
+        Console.WriteLine("Enter diet preference (Vegetarian/Non Vegetarian/Eggetarian):");
+        string dietPreference = Console.ReadLine();
+
+        Console.WriteLine("Enter spice level (High/Medium/Low):");
+        string spiceLevel = Console.ReadLine();
+
+        Console.WriteLine("Enter Food preference (North Indian/South Indian/Other):");
+        string FoodPreference = Console.ReadLine();
+
+        Console.WriteLine("Do you have a sweet tooth? (Yes/No):");
+        string sweetTooth = Console.ReadLine();
+
+        return $"additem:{itemName};{price};{availabilityStatus};{mealType};{dietPreference};{spiceLevel};{FoodPreference};{sweetTooth}";
     }
+
 
     public static string UpdateMenuItem()
     {
         Console.WriteLine("Enter item ID:");
         string updateItemId = Console.ReadLine();
-        Console.WriteLine("Enter updated item name:");
-        string updatedItemName = Console.ReadLine();
         Console.WriteLine("Enter updated price:");
         string updatedPrice = Console.ReadLine();
         Console.WriteLine("Enter updated availability status (true/false):");
         string updatedAvailabilityStatus = Console.ReadLine();
-        Console.WriteLine("Enter updated meal type:");
-        string updatedMealType = Console.ReadLine();
-        return $"updateitem:{updateItemId};{updatedItemName};{updatedPrice};{updatedAvailabilityStatus};{updatedMealType}";
+
+        return $"updateitem:{updateItemId};{updatedPrice};{updatedAvailabilityStatus}";
     }
+
     public static string DeleteMenuItem()
     {
         Console.WriteLine("Enter item ID:");
@@ -238,4 +304,83 @@ class Client
             return "";
         }
     }
-}
+    public static string UpdateProfile(int userId)
+    {
+        Console.WriteLine("Please answer these questions to know your preferences");
+
+        Console.WriteLine("1) Please select one- \n1) Vegetarian \n2) Non Vegetarian \n3) Eggetarian");
+        string dietChoice = Console.ReadLine();
+        string dietPreference;
+        switch (dietChoice)
+        {
+            case "1":
+                dietPreference = "Vegetarian";
+                break;
+            case "2":
+                dietPreference = "Non Vegetarian";
+                break;
+            case "3":
+                dietPreference = "Eggetarian";
+                break;
+            default:
+                dietPreference = "Unknown";
+                break;
+        };
+
+        Console.WriteLine("2) Please select your spice level \n1) High \n2) Medium \n3) Low");
+        string spiceLevelChoice = Console.ReadLine();
+        string spicePreference;
+        switch (spiceLevelChoice)
+        {
+            case "1":
+                spicePreference = "High";
+                break;
+            case "2":
+                spicePreference = "Medium";
+                break;
+            case "3":
+                spicePreference = "Low";
+                break;
+            default:
+                spicePreference = "Unknown";
+                break;
+        }
+
+        Console.WriteLine("3) What do you prefer most? \n1) North Indian \n2) South Indian \n3) Other");
+        string foodChoice = Console.ReadLine();
+        string foodPreference;
+        switch (foodChoice)
+        {
+            case "1":
+                foodPreference = "North Indian";
+                break;
+            case "2":
+                foodPreference = "South Indian";
+                break;
+            case "3":
+                foodPreference = "Other";
+                break;
+            default:
+                foodPreference = "Unknown";
+                break;
+        }
+
+        Console.WriteLine("4) Do you have a sweet tooth? \n1) Yes \n2) No");
+        string sweetToothChoice = Console.ReadLine();
+        string sweetToothPreference;
+        switch (sweetToothChoice)
+        {
+            case "1":
+                sweetToothPreference = "Yes";
+                break;
+            case "2":
+                sweetToothPreference = "No";
+                break;
+            default:
+                sweetToothPreference = "Unknown";
+                break;
+        }
+        return $"updateprofile:{userId};{dietPreference};{spicePreference};{foodPreference};{sweetToothPreference}";
+    }
+    }
+*/
