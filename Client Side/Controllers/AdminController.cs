@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 public class AdminController : IUserController
 {
 
@@ -49,9 +44,9 @@ public class AdminController : IUserController
                     continue;
             }
             break;
-
         }
     }
+
     public string GetActionMessage()
     {
         return message;
@@ -61,26 +56,19 @@ public class AdminController : IUserController
     {
         Console.WriteLine("Enter item name:");
         string itemName = Console.ReadLine();
-
         Console.WriteLine("Enter price:");
         string price = Console.ReadLine();
-
         Console.WriteLine("Enter availability status (true/false):");
         string availabilityStatus = Console.ReadLine();
-
         Console.WriteLine("Enter meal type:");
         string mealType = Console.ReadLine();
-
         Console.WriteLine("Enter diet preference (Vegetarian/Non Vegetarian/Eggetarian):");
         string dietPreference = Console.ReadLine();
-
         Console.WriteLine("Enter spice level (High/Medium/Low):");
         string spiceLevel = Console.ReadLine();
-
         Console.WriteLine("Enter Food preference (North Indian/South Indian/Other):");
         string FoodPreference = Console.ReadLine();
-
-        Console.WriteLine("Do you have a sweet tooth? (Yes/No):");
+        Console.WriteLine("Is the food sweet? (Yes/No):");
         string sweetTooth = Console.ReadLine();
 
         return $"additem:{itemName};{price};{availabilityStatus};{mealType};{dietPreference};{spiceLevel};{FoodPreference};{sweetTooth}";
@@ -102,6 +90,7 @@ public class AdminController : IUserController
     {
         Console.WriteLine("Enter item ID:");
         string deleteItemId = Console.ReadLine();
+
         return $"deleteitem:{deleteItemId}";
     }
 }

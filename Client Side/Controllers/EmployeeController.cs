@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 public class EmployeeController : IUserController
 {
     private string email;
@@ -30,7 +26,7 @@ public class EmployeeController : IUserController
                     message = GiveFeedback(userId);
                     break;
                 case "3":
-                    message = GiveVote();
+                    message = GiveVote(userId);
                     break;
                 case "4":
                     message = UpdateProfile(userId);
@@ -77,11 +73,11 @@ public class EmployeeController : IUserController
         }
     }
 
-    private string GiveVote()
+    private string GiveVote(int userId)
     {
         Console.WriteLine("Enter the item id for which you want to vote an item");
         string itemId = Console.ReadLine();
-        return $"voteitem:{itemId}";
+        return $"voteitem:{userId};{itemId}";
     }
 
     private string UpdateProfile(int userId)
@@ -161,7 +157,5 @@ public class EmployeeController : IUserController
                 break;
         }
         return $"updateprofile:{userId};{dietPreference};{spicePreference};{foodPreference};{sweetToothPreference}";
-}
-
-   
+} 
 }

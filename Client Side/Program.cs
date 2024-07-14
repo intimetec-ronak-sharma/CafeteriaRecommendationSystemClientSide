@@ -55,13 +55,13 @@ public class Program
                     switch (role)
                     {
                         case "Admin":
-                            controller = new AdminController(email,userId);
+                            controller = new AdminController(email, userId);
                             break;
                         case "Chef":
-                            controller = new ChefController(email,userId);
+                            controller = new ChefController(email, userId);
                             break;
                         case "Employee":
-                            controller = new EmployeeController(email,userId);
+                            controller = new EmployeeController(email, userId);
                             break;
                         default:
                             Console.WriteLine("Invalid  role");
@@ -101,7 +101,6 @@ public class Program
 
                             data = Encoding.ASCII.GetBytes(message);
                             stream.Write(data, 0, data.Length);
-
                             responseBuffer = new byte[8192];
                             responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
                             response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
@@ -112,7 +111,6 @@ public class Program
 
                     if (response.Contains("Logout successful"))
                     {
-                        Console.WriteLine("You have been logged out.");
                         break;
                     }
 
@@ -120,7 +118,6 @@ public class Program
                 stream.Close();
                 client.Close();
             }
-
 
             catch (Exception e)
             {
@@ -142,13 +139,26 @@ public class Program
         }
         if (response.Contains("Please provide your feedback"))
         {
-            Console.WriteLine($"Please provide feedback for: ");
-            Console.WriteLine("Q1. What didn’t you like about the food item?");
-            string q1Response = Console.ReadLine();
-            Console.WriteLine("Q2. How would you like the food item to taste?");
-            string q2Response = Console.ReadLine();
-            Console.WriteLine("Q3. Share your mom’s recipe (optional):");
-            string q3Response = Console.ReadLine();
+            Console.WriteLine("Do you want to provide feedback? (yes/no):");
+            string feedbackOption = Console.ReadLine().Trim().ToLower();
+            if (feedbackOption == "yes")
+            {
+                Console.WriteLine($"Please provide feedback for: ");
+                Console.WriteLine("Q1. What didn’t you like about the food item?");
+                string q1Response = Console.ReadLine();
+                Console.WriteLine("Q2. How would you like the food item to taste?");
+                string q2Response = Console.ReadLine();
+                Console.WriteLine("Q3. Share your mom’s recipe (optional):");
+                string q3Response = Console.ReadLine();
+            }
+            else if (feedbackOption == "no")
+            {
+                Console.WriteLine("You choose not to provide feedback.");
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Please enter 'yes' or 'no'.");
+            }
         }
     }
 }
