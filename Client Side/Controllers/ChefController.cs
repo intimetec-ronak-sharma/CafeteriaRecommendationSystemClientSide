@@ -1,7 +1,7 @@
 ﻿using System;
+
 public class ChefController : IUserController
 {
-
     private string email;
     private int userId;
     private string message;
@@ -47,15 +47,15 @@ public class ChefController : IUserController
                     continue;
             }
             break;
-
         }
     }
+
     public string GetActionMessage()
     {
         return message;
     }
 
-    private string ViewRecommendedItem()
+    public string ViewRecommendedItem()
     {
         Console.WriteLine("Enter meal type (Breakfast, Lunch, Dinner):");
         string mealType = Console.ReadLine();
@@ -64,7 +64,7 @@ public class ChefController : IUserController
         return $"recommenditem:{mealType};{size}";
     }
 
-    private string RollOutItems()
+    public string RollOutItems()
     {
         Console.WriteLine("Enter Items Id For Recommend Items to Employee:");
         string itemID = Console.ReadLine();

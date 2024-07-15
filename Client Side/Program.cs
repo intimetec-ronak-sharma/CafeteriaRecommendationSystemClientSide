@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Net.Sockets;
 using System.Text;
+
 public class Program
 {
     public static TcpClient client;
     public static NetworkStream stream;
+
     public static void Main()
     {
         while (true)
@@ -23,14 +25,9 @@ public class Program
                 {
                     Console.WriteLine("Enter your email:");
                     email = Console.ReadLine();
-
                     string loginMessage = email + ":";
-                    byte[] loginData = Encoding.ASCII.GetBytes(loginMessage);
-                    stream.Write(loginData, 0, loginData.Length);
-
-                    byte[] buffer = new byte[8192];
-                    int byteCount = stream.Read(buffer, 0, buffer.Length);
-                    response = Encoding.ASCII.GetString(buffer, 0, byteCount);
+                    SendMessage(loginMessage);
+                    response = ReceiveMessage();
                     Console.WriteLine($"{response.Split('.')[0].TrimEnd()}");
 
                     if (response.Contains("Login successful"))
@@ -47,9 +44,10 @@ public class Program
                     {
                         Console.WriteLine("Login failed. Please check your email and try again.");
                     }
-
                 }
+
                 string role = response.Split(' ')[3].Trim('.');
+
                 while (true)
                 {
                     switch (role)
@@ -64,68 +62,67 @@ public class Program
                             controller = new EmployeeController(email, userId);
                             break;
                         default:
-                            Console.WriteLine("Invalid  role");
+                            Console.WriteLine("Invalid role");
                             continue;
                     }
+
                     controller.HandleActions();
                     string message = email + ":" + controller.GetActionMessage();
-                    byte[] data = Encoding.ASCII.GetBytes(message);
-                    stream.Write(data, 0, data.Length);
+                    SendMessage(message);
 
-                    byte[] responseBuffer = new byte[8192];
-                    int responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
-                    response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
+                    response = ReceiveMessage();
                     Console.WriteLine(response);
                     if (response.Contains("Discard Menu Item List"))
                     {
-                        while (true)
-                        {
-                            Console.WriteLine("Select one action from the following action: \n1) Remove the Food Item from Menu List \n2) Get Detailed Feedback ");
-                            string discardAction = Console.ReadLine();
-                            switch (discardAction)
-                            {
-                                case "1":
-                                    Console.WriteLine("Enter the food item name to remove:");
-                                    string removeItemName = Console.ReadLine();
-                                    message = email + ":removefooditem:" + removeItemName;
-                                    break;
-                                case "2":
-                                    Console.WriteLine("Enter the food item name to get detailed feedback:");
-                                    string feedbackItemName = Console.ReadLine();
-                                    message = email + ":insertfeedbacknotification:" + feedbackItemName;
-                                    break;
-                                default:
-                                    Console.WriteLine("Please enter a valid option.");
-                                    continue;
-                            }
-
-                            data = Encoding.ASCII.GetBytes(message);
-                            stream.Write(data, 0, data.Length);
-                            responseBuffer = new byte[8192];
-                            responseByteCount = stream.Read(responseBuffer, 0, responseBuffer.Length);
-                            response = Encoding.ASCII.GetString(responseBuffer, 0, responseByteCount);
-                            Console.WriteLine(response);
-                            break;
-                        }
+                        HandleDiscardMenuItemList(email,message);
                     }
 
                     if (response.Contains("Logout successful"))
                     {
                         break;
                     }
-
                 }
                 stream.Close();
                 client.Close();
             }
-
             catch (Exception e)
             {
                 Console.WriteLine("Exception: " + e.Message);
             }
         }
     }
-    private static void HandleNotificationsAndFeedback(string response)
+
+    public static void HandleDiscardMenuItemList(string email,string message)
+    {
+        while (true)
+        {
+            Console.WriteLine("Select one action from the following action: \n1) Remove the Food Item from Menu List \n2) Get Detailed Feedback ");
+            string discardAction = Console.ReadLine();
+            switch (discardAction)
+            {
+                case "1":
+                    Console.WriteLine("Enter the food item name to remove:");
+                    string removeItemName = Console.ReadLine();
+                    message = email + ":removefooditem:" + removeItemName;
+                    break;
+                case "2":
+                    Console.WriteLine("Enter the food item name to get detailed feedback:");
+                    string feedbackItemName = Console.ReadLine();
+                    message = email + ":insertfeedbacknotification:" + feedbackItemName;
+                    break;
+                default:
+                    Console.WriteLine("Please enter a valid option.");
+                    continue;
+            }
+
+            SendMessage(message);
+            string response = ReceiveMessage();
+            Console.WriteLine(response);
+            break;
+        }
+    }
+    
+    public static void HandleNotificationsAndFeedback(string response)
     {
         if (response.Contains("Notifications:"))
         {
@@ -137,6 +134,7 @@ public class Program
                 Console.WriteLine(notificationsText);
             }
         }
+
         if (response.Contains("Please provide your feedback"))
         {
             Console.WriteLine("Do you want to provide feedback? (yes/no):");
@@ -160,5 +158,18 @@ public class Program
                 Console.WriteLine("Invalid input. Please enter 'yes' or 'no'.");
             }
         }
+    }
+
+    public static void SendMessage(string message)
+    {
+        byte[] data = Encoding.ASCII.GetBytes(message);
+        stream.Write(data, 0, data.Length);
+    }
+
+    public static string ReceiveMessage()
+    {
+        byte[] buffer = new byte[8192];
+        int byteCount = stream.Read(buffer, 0, buffer.Length);
+        return Encoding.ASCII.GetString(buffer, 0, byteCount);
     }
 }

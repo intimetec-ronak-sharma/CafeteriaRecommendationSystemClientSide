@@ -1,7 +1,7 @@
 ﻿using System;
+
 public class AdminController : IUserController
 {
-
     private string email;
     private string message;
     private int userId;
@@ -52,7 +52,7 @@ public class AdminController : IUserController
         return message;
     }
 
-    private string AddMenuItem()
+    public string AddMenuItem()
     {
         Console.WriteLine("Enter item name:");
         string itemName = Console.ReadLine();
@@ -74,7 +74,7 @@ public class AdminController : IUserController
         return $"additem:{itemName};{price};{availabilityStatus};{mealType};{dietPreference};{spiceLevel};{FoodPreference};{sweetTooth}";
     }
 
-    private string UpdateMenuItem()
+    public string UpdateMenuItem()
     {
         Console.WriteLine("Enter item ID:");
         string updateItemId = Console.ReadLine();
@@ -86,7 +86,7 @@ public class AdminController : IUserController
         return $"updateitem:{updateItemId};{updatedPrice};{updatedAvailabilityStatus}";
     }
 
-    private string DeleteMenuItem()
+    public string DeleteMenuItem()
     {
         Console.WriteLine("Enter item ID:");
         string deleteItemId = Console.ReadLine();

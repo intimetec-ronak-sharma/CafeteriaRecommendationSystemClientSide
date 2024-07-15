@@ -1,4 +1,5 @@
 ﻿using System;
+
 public class EmployeeController : IUserController
 {
     private string email;
@@ -47,14 +48,14 @@ public class EmployeeController : IUserController
         return message;
     }
 
-    private string ViewMenu(int userId)
+    public string ViewMenu(int userId)
     {
         Console.WriteLine("Enter meal type (Breakfast, Lunch, Dinner):");
         string mealType = Console.ReadLine();
         return $"viewmenu:{userId};{mealType}";
     }
 
-    private string GiveFeedback(int userId)
+    public string GiveFeedback(int userId)
     {
         Console.WriteLine("Enter item ID:");
         string feedbackItemId = Console.ReadLine();
@@ -73,14 +74,14 @@ public class EmployeeController : IUserController
         }
     }
 
-    private string GiveVote(int userId)
+    public string GiveVote(int userId)
     {
         Console.WriteLine("Enter the item id for which you want to vote an item");
         string itemId = Console.ReadLine();
         return $"voteitem:{userId};{itemId}";
     }
 
-    private string UpdateProfile(int userId)
+    public string UpdateProfile(int userId)
     {
         Console.WriteLine("Please answer these questions to know your preferences");
 
